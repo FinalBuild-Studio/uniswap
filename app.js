@@ -3,8 +3,9 @@ const helmet = require('koa-helmet');
 const compress = require('koa-compress');
 const _ = require('lodash');
 const uniswap = require('./libs/uniswap');
+const Cache = require('node-cache');
+const cache = new Cache({ stdTTL: 43200 });
 const app = new Koa();
-
 
 app
   .use(helmet())
@@ -19,14 +20,20 @@ app
         return pairs;
       })
     };
-    const data = await uniswapv2();
+    const data = cache.get('data') || await uniswapv2();
 
-    ctx.body = {
-      data: _
+    // cache data
+    cache.set('data', data);
+
+    // sort response
+    const response = _
         .chain(data)
         .flatten()
         .orderBy('returnOnInvestment', 'desc')
-        .value(),
+        .value();
+
+    ctx.body = {
+      data: response,
     };
   })
   .listen(3000);
