@@ -23,14 +23,16 @@ app
     const data = cache.get('data') || await uniswapv2();
 
     // cache data
-    cache.set('data', data);
+    if (!cache.ttl('data')) {
+      cache.set('data', data);
+    }
 
     // sort response
     const response = _
-        .chain(data)
-        .flatten()
-        .orderBy('returnOnInvestment', 'desc')
-        .value();
+      .chain(data)
+      .flatten()
+      .orderBy('returnOnInvestment', 'desc')
+      .value();
 
     ctx.body = {
       data: response,
