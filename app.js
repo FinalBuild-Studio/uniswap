@@ -4,7 +4,7 @@ const compress = require('koa-compress');
 const _ = require('lodash');
 const uniswap = require('./libs/uniswap');
 const Cache = require('node-cache');
-const cache = new Cache({ stdTTL: 43200 });
+const cache = new Cache({ stdTTL: 4320 });
 const app = new Koa();
 
 app
