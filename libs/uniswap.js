@@ -34,7 +34,14 @@ module.exports = (skip = 0) => {
     const pairDayDatas = _
       .chain(data)
       .get('pairDayDatas')
-      .filter(data => _.toNumber(data.reserveUSD) >= totalLiquidity * (0.05 / 100))
+      .filter((data) => {
+        const liquidityThreshold = totalLiquidity * (0.05 / 100);
+        const volume = _.toNumber(data.dailyVolumeUSD);
+        const volumeTreshold = totalLiquidity * 0.05;
+        const reserveUSD = _.toNumber(data.reserveUSD);
+
+        return reserveUSD >= liquidityThreshold || volume >= volumeTreshold;
+      })
       .value();
 
     return pairDayDatas.map((pair) => {
