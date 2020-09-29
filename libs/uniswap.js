@@ -31,7 +31,6 @@ module.exports = (skip = 0) => {
       .get('uniswapFactory.totalLiquidityUSD')
       .toNumber()
       .value();
-    console.log(totalLiquidity * (0.1 / 100))
     const pairDayDatas = _
       .chain(data)
       .get('pairDayDatas')
