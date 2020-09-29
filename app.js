@@ -13,7 +13,7 @@ app
   .use(async (ctx) => {
     const uniswapv2 = (skip = 0) => {
       return uniswap(skip).then((pairs) => {
-        if (pairs.length >= 1000) {
+        if (pairs.length) {
           return Promise.all([pairs, uniswap(skip + 1)]);
         }
 

@@ -1,0 +1,28 @@
+query pairs($skip: Int!, $date: Int!) {
+  uniswapFactory(id: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f") {
+    id
+    pairCount
+    totalLiquidityUSD
+  }
+  pairDayDatas(
+    first: 1000,
+    skip: $skip,
+    orderBy: reserveUSD,
+    orderDirection: desc,
+    where: {
+      date: $date
+    }
+  ) {
+    pairAddress
+    reserveUSD
+    dailyVolumeUSD
+    token0 {
+      id
+      symbol
+    }
+    token1 {
+      id
+      symbol
+    }
+  }
+}

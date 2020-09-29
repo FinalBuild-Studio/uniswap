@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const dayjs = require('dayjs');
+const fs = require('fs');
 const utc = require('dayjs/plugin/utc');
 const _ = require('lodash');
 
@@ -7,29 +8,7 @@ dayjs.extend(utc);
 
 module.exports = (skip = 0) => {
   const date = dayjs().utc().add(-1, 'd').startOf('d').valueOf() / 1000;
-  const query = `query pairs($skip: Int!, $date: Int!) {
-    pairDayDatas(
-      first: 1000,
-      skip: $skip,
-      orderBy: dailyVolumeUSD,
-      orderDirection: desc,
-      where: {
-        date: $date
-      }
-    ) {
-      pairAddress
-      reserveUSD
-      dailyVolumeUSD
-      token0 {
-        id
-        symbol
-      }
-      token1 {
-        id
-        symbol
-      }
-    }
-  }`;
+  const query = fs.readFileSync(`${__dirname}/../graphql/pairs`).toString();
 
   return fetch('https://api.thegraph.com/subgraphs/name/ianlapham/uniswapv2', {
     method: 'POST',
@@ -45,18 +24,33 @@ module.exports = (skip = 0) => {
     ),
   })
   .then(response => response.json())
-  .then((response) => response.data.pairDayDatas.map((pair) => {
-    const fee = _.toNumber(pair.dailyVolumeUSD) * (0.3 / 100);
-    const liquidity = _.toNumber(pair.reserveUSD);
-    const returnOnInvestment = _.defaultTo((fee / liquidity) * 365, 0);
+  .then((response) => {
+    const data = _.defaultTo(response.data, {});
+    const totalLiquidity = _
+      .chain(data)
+      .get('uniswapFactory.totalLiquidityUSD')
+      .toNumber()
+      .value();
+    console.log(totalLiquidity * (0.1 / 100))
+    const pairDayDatas = _
+      .chain(data)
+      .get('pairDayDatas')
+      .filter(data => _.toNumber(data.reserveUSD) >= totalLiquidity * (0.05 / 100))
+      .value();
 
-    return {
-      ...pair,
-      returnOnInvestment,
-      token0: pair.token0.symbol,
-      token0Address: pair.token0.id,
-      token1: pair.token1.symbol,
-      token1Address: pair.token1.id,
-    }
-  }));
+    return pairDayDatas.map((pair) => {
+      const fee = _.toNumber(pair.dailyVolumeUSD) * (0.3 / 100);
+      const liquidity = _.toNumber(pair.reserveUSD);
+      const returnOnInvestment = _.defaultTo((fee / liquidity) * 365, 0);
+
+      return {
+        ...pair,
+        returnOnInvestment,
+        token0: pair.token0.symbol,
+        token0Address: pair.token0.id,
+        token1: pair.token1.symbol,
+        token1Address: pair.token1.id,
+      }
+    });
+  });
 };
